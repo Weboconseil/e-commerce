@@ -1,15 +1,29 @@
 import streamlit as st
 import pandas as pd
 
-def calculate_financials(inputs):
+def initialize_session_state():
+    if 'num_paniers' not in st.session_state:
+        st.session_state.num_paniers = 2
+    if 'paniers_data' not in st.session_state:
+        st.session_state.paniers_data = [{
+            'nom': f'Panier {i+1}',
+            'prix_achat': 10.0,
+            'frais_annexes': 2.0,
+            'marge': 60
+        } for i in range(2)]
+
+def calculate_financials(inputs, paniers_data):
     # Calcul du nombre de commandes
     nb_commandes = inputs['trafic_mensuel'] * (inputs['taux_conversion'] / 100)
     
     # Calcul du chiffre d'affaires pour chaque panier
-    ca_panier1 = nb_commandes * inputs['prix_achat_1'] * (1 + inputs['marge_1'] / 100)
-    ca_panier2 = nb_commandes * inputs['prix_achat_2'] * (1 + inputs['marge_2'] / 100)
+    ca_par_panier = {}
+    ca_total = 0
     
-    ca_total = ca_panier1 + ca_panier2
+    for panier in paniers_data:
+        ca_panier = nb_commandes * panier['prix_achat'] * (1 + panier['marge'] / 100)
+        ca_par_panier[panier['nom']] = ca_panier
+        ca_total += ca_panier
     
     # Calcul des charges variables
     commissions = (ca_total * 0.029) + (nb_commandes * 0.30)
@@ -20,7 +34,7 @@ def calculate_financials(inputs):
     charges_fixes = (
         inputs['abonnement_shopify'] +
         inputs['consultant_seo'] +
-        (inputs['nom_domaine'] / 12) +  # Conversion annuel en mensuel
+        (inputs['nom_domaine'] / 12) +
         inputs['marketing']
     )
     
@@ -30,10 +44,8 @@ def calculate_financials(inputs):
     impot = resultat_avant_impot * 0.25 if resultat_avant_impot > 0 else 0
     resultat_net = resultat_avant_impot - impot
     
-    return {
+    resultats = {
         'Nombre de commandes': round(nb_commandes, 2),
-        'Chiffre d\'affaires Panier 1': round(ca_panier1, 2),
-        'Chiffre d\'affaires Panier 2': round(ca_panier2, 2),
         'Chiffre d\'affaires Total': round(ca_total, 2),
         'Charges Variables': round(charges_variables, 2),
         'Charges Fixes': round(charges_fixes, 2),
@@ -42,58 +54,95 @@ def calculate_financials(inputs):
         'Impôt': round(impot, 2),
         'Résultat Net': round(resultat_net, 2)
     }
+    
+    # Ajouter le CA par panier aux résultats
+    for nom_panier, ca in ca_par_panier.items():
+        resultats[f"CA {nom_panier}"] = round(ca, 2)
+        
+    return resultats
+
+def display_panier_inputs(index):
+    panier = st.session_state.paniers_data[index]
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        nouveau_nom = st.text_input(
+            'Nom du panier',
+            value=panier['nom'],
+            key=f'nom_{index}'
+        )
+        panier['nom'] = nouveau_nom
+        
+    with col2:
+        panier['prix_achat'] = st.number_input(
+            'Prix d\'achat',
+            value=panier['prix_achat'],
+            key=f'prix_{index}'
+        )
+        
+    with col3:
+        panier['marge'] = st.slider(
+            'Marge (%)',
+            0, 200, int(panier['marge']),
+            key=f'marge_{index}'
+        )
 
 def main():
     st.title('Calculateur de Rentabilité E-commerce')
     
-    st.header('1. Coûts des paniers')
-    col1, col2 = st.columns(2)
+    # Initialiser l'état de la session
+    initialize_session_state()
     
-    with col1:
-        st.subheader('Panier 1')
-        prix_achat_1 = st.number_input('Prix d\'achat', key='prix1', value=10.0)
-        frais_annexes_1 = st.number_input('Frais annexes', key='frais1', value=2.0)
+    # Gestion des paniers
+    st.header('1. Gestion des paniers')
     
-    with col2:
-        st.subheader('Panier 2')
-        prix_achat_2 = st.number_input('Prix d\'achat', key='prix2', value=15.0)
-        frais_annexes_2 = st.number_input('Frais annexes', key='frais2', value=3.0)
+    col_add, col_remove = st.columns([1, 1])
+    with col_add:
+        if st.button('Ajouter un panier'):
+            st.session_state.num_paniers += 1
+            st.session_state.paniers_data.append({
+                'nom': f'Panier {st.session_state.num_paniers}',
+                'prix_achat': 10.0,
+                'frais_annexes': 2.0,
+                'marge': 60
+            })
     
-    st.header('2. Marges bénéficiaires')
-    col3, col4 = st.columns(2)
+    with col_remove:
+        if st.session_state.num_paniers > 1 and st.button('Supprimer le dernier panier'):
+            st.session_state.num_paniers -= 1
+            st.session_state.paniers_data.pop()
     
-    with col3:
-        marge_1 = st.slider('Marge Panier 1 (%)', 0, 200, 60)
+    # Afficher les inputs pour chaque panier
+    for i in range(st.session_state.num_paniers):
+        st.subheader(f'Configuration {st.session_state.paniers_data[i]["nom"]}')
+        display_panier_inputs(i)
+        st.divider()
     
-    with col4:
-        marge_2 = st.slider('Marge Panier 2 (%)', 0, 200, 60)
-    
-    st.header('3. Trafic et Conversion')
+    # Trafic et Conversion
+    st.header('2. Trafic et Conversion')
     trafic_mensuel = st.number_input('Trafic mensuel', value=1000)
     taux_conversion = st.slider('Taux de conversion (%)', 0.0, 10.0, 2.0, 0.1)
     
-    st.header('4. Charges d\'exploitation')
+    # Charges d'exploitation
+    st.header('3. Charges d\'exploitation')
     
     st.subheader('Charges variables')
     frais_livraison = st.number_input('Frais de livraison par commande', value=6.0)
     
     st.subheader('Charges fixes')
-    col5, col6 = st.columns(2)
+    col1, col2 = st.columns(2)
     
-    with col5:
+    with col1:
         abonnement_shopify = st.number_input('Abonnement Shopify mensuel', value=32.0)
         consultant_seo = st.number_input('Consultant SEO mensuel', value=200.0)
     
-    with col6:
+    with col2:
         nom_domaine = st.number_input('Nom de domaine annuel', value=15.0)
         marketing = st.number_input('Budget Marketing mensuel', value=250.0)
     
-    # Rassembler toutes les entrées
+    # Rassembler les entrées pour le calcul
     inputs = {
-        'prix_achat_1': prix_achat_1,
-        'prix_achat_2': prix_achat_2,
-        'marge_1': marge_1,
-        'marge_2': marge_2,
         'trafic_mensuel': trafic_mensuel,
         'taux_conversion': taux_conversion,
         'frais_livraison': frais_livraison,
@@ -105,24 +154,32 @@ def main():
     
     # Calculer et afficher les résultats
     if st.button('Calculer les prévisions'):
-        resultats = calculate_financials(inputs)
+        resultats = calculate_financials(inputs, st.session_state.paniers_data)
         
         st.header('Résultats des Prévisions Financières')
         
-        # Créer un DataFrame pour un affichage plus propre
-        df_resultats = pd.DataFrame(list(resultats.items()), columns=['Métrique', 'Valeur'])
-        df_resultats['Valeur'] = df_resultats['Valeur'].apply(lambda x: f"{x:,.2f} €")
-        
-        st.table(df_resultats)
-        
-        # Afficher quelques KPIs importants dans des métriques séparées
-        col7, col8, col9 = st.columns(3)
-        with col7:
+        # Afficher les KPIs principaux
+        col1, col2, col3 = st.columns(3)
+        with col1:
             st.metric("Chiffre d'affaires mensuel", f"{resultats['Chiffre d\'affaires Total']:,.2f} €")
-        with col8:
+        with col2:
             st.metric("Marge Brute", f"{resultats['Marge Brute']:,.2f} €")
-        with col9:
+        with col3:
             st.metric("Résultat Net", f"{resultats['Résultat Net']:,.2f} €")
+        
+        # Afficher le détail par panier
+        st.subheader('Détail par panier')
+        ca_paniers = {k: v for k, v in resultats.items() if k.startswith('CA ')}
+        df_ca_paniers = pd.DataFrame(list(ca_paniers.items()), columns=['Panier', 'Chiffre d\'affaires'])
+        df_ca_paniers['Chiffre d\'affaires'] = df_ca_paniers['Chiffre d\'affaires'].apply(lambda x: f"{x:,.2f} €")
+        st.table(df_ca_paniers)
+        
+        # Afficher les autres métriques
+        st.subheader('Détail des métriques')
+        autres_metriques = {k: v for k, v in resultats.items() if not k.startswith('CA ')}
+        df_resultats = pd.DataFrame(list(autres_metriques.items()), columns=['Métrique', 'Valeur'])
+        df_resultats['Valeur'] = df_resultats['Valeur'].apply(lambda x: f"{x:,.2f} €")
+        st.table(df_resultats)
 
 if __name__ == '__main__':
     main()
