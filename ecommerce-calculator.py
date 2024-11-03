@@ -184,7 +184,7 @@ def main():
         'nom_domaine': nom_domaine,
         'marketing': marketing
     }
-
+    
     # Calculer et afficher les résultats
     if st.button('Calculer les prévisions'):
         resultats = calculate_financials(inputs, st.session_state.paniers_data)
@@ -202,42 +202,22 @@ def main():
         with col4:
             st.metric("Résultat Net", format_number_fr(resultats['Résultat Net']))
         
-        # Créer un DataFrame pour le détail par panier
+        # Afficher le détail par panier
         st.subheader('Détail par panier')
         ca_paniers = {k: v for k, v in resultats.items() if k.startswith('CA ')}
         df_ca_paniers = pd.DataFrame(list(ca_paniers.items()), columns=['Panier', 'Chiffre d\'affaires'])
+        df_ca_paniers['Chiffre d\'affaires'] = df_ca_paniers['Chiffre d\'affaires'].apply(lambda x: format_number_fr(x))
+        st.table(df_ca_paniers)
         
-        # Formater les valeurs avec le format français
-        formatted_ca = []
-        for value in df_ca_paniers['Chiffre d\'affaires']:
-            formatted_ca.append(format_number_fr(value))
-        df_ca_paniers['Chiffre d\'affaires'] = formatted_ca
-        
-        # Afficher le tableau des paniers
-        st.table(df_ca_paniers.style.set_properties(**{
-            'text-align': 'right',
-            'font-family': 'monospace'
-        }))
-        
-        # Créer un DataFrame pour les autres métriques
+        # Afficher les autres métriques
         st.subheader('Détail des métriques')
         autres_metriques = {k: v for k, v in resultats.items() if not k.startswith('CA ')}
         df_resultats = pd.DataFrame(list(autres_metriques.items()), columns=['Métrique', 'Valeur'])
-        
-        # Formater les valeurs avec le format français
-        formatted_values = []
-        for index, row in df_resultats.iterrows():
-            if row['Métrique'] == 'Nombre de commandes':
-                formatted_values.append(format_number_fr(row['Valeur'], is_currency=False, is_integer=True))
-            else:
-                formatted_values.append(format_number_fr(row['Valeur']))
-        df_resultats['Valeur'] = formatted_values
-        
-        # Afficher le tableau des métriques
-        st.table(df_resultats.style.set_properties(**{
-            'text-align': 'right',
-            'font-family': 'monospace'
-        }))
+        df_resultats['Valeur'] = df_resultats.apply(lambda row: 
+            format_number_fr(row['Valeur'], is_currency=False, is_integer=True) 
+            if row['Métrique'] == 'Nombre de commandes'
+            else format_number_fr(row['Valeur']), axis=1)
+        st.table(df_resultats)
 
 if __name__ == '__main__':
     main()
