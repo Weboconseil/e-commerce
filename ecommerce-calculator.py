@@ -1,5 +1,38 @@
 import streamlit as st
 import pandas as pd
+import locale
+
+# Configuration du format français pour les nombres
+try:
+    locale.setlocale(locale.LC_ALL, 'fr_FR.UTF-8')
+except:
+    try:
+        locale.setlocale(locale.LC_ALL, 'fr_FR')
+    except:
+        pass
+
+def format_number_fr(number, decimal_places=2, is_currency=True, is_integer=False):
+    """
+    Formate les nombres au format français
+    """
+    try:
+        if is_integer:
+            return locale.format_string("%d", round(number), grouping=True)
+        
+        if is_currency:
+            number_str = locale.format_string(f"%.{decimal_places}f", number, grouping=True)
+            return f"{number_str.replace('.', ',')} €"
+        else:
+            return locale.format_string(f"%.{decimal_places}f", number, grouping=True).replace('.', ',')
+    except:
+        # Fallback si locale ne fonctionne pas
+        if is_integer:
+            return f"{round(number):,}".replace(',', ' ')
+        
+        if is_currency:
+            return f"{number:,.{decimal_places}f} €".replace(',', ' ').replace('.', ',')
+        else:
+            return f"{number:.{decimal_places}f}".replace('.', ',')
 
 def initialize_session_state():
     if 'num_paniers' not in st.session_state:
@@ -45,19 +78,19 @@ def calculate_financials(inputs, paniers_data):
     resultat_net = resultat_avant_impot - impot
     
     resultats = {
-        'Nombre de commandes': round(nb_commandes, 2),
-        'Chiffre d\'affaires Total': round(ca_total, 2),
-        'Charges Variables': round(charges_variables, 2),
-        'Charges Fixes': round(charges_fixes, 2),
-        'Marge Brute': round(marge_brute, 2),
-        'Résultat avant impôt': round(resultat_avant_impot, 2),
-        'Impôt': round(impot, 2),
-        'Résultat Net': round(resultat_net, 2)
+        'Nombre de commandes': round(nb_commandes),  # Arrondi à l'unité
+        'Chiffre d\'affaires Total': ca_total,
+        'Charges Variables': charges_variables,
+        'Charges Fixes': charges_fixes,
+        'Marge Brute': marge_brute,
+        'Résultat avant impôt': resultat_avant_impot,
+        'Impôt': impot,
+        'Résultat Net': resultat_net
     }
     
     # Ajouter le CA par panier aux résultats
     for nom_panier, ca in ca_par_panier.items():
-        resultats[f"CA {nom_panier}"] = round(ca, 2)
+        resultats[f"CA {nom_panier}"] = ca
         
     return resultats
 
@@ -159,26 +192,31 @@ def main():
         st.header('Résultats des Prévisions Financières')
         
         # Afficher les KPIs principaux
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
         with col1:
-            st.metric("Chiffre d'affaires mensuel", f"{resultats['Chiffre d\'affaires Total']:,.2f} €")
+            st.metric("Nombre de commandes", format_number_fr(resultats['Nombre de commandes'], is_currency=False, is_integer=True))
         with col2:
-            st.metric("Marge Brute", f"{resultats['Marge Brute']:,.2f} €")
+            st.metric("Chiffre d'affaires mensuel", format_number_fr(resultats['Chiffre d\'affaires Total']))
         with col3:
-            st.metric("Résultat Net", f"{resultats['Résultat Net']:,.2f} €")
+            st.metric("Marge Brute", format_number_fr(resultats['Marge Brute']))
+        with col4:
+            st.metric("Résultat Net", format_number_fr(resultats['Résultat Net']))
         
         # Afficher le détail par panier
         st.subheader('Détail par panier')
         ca_paniers = {k: v for k, v in resultats.items() if k.startswith('CA ')}
         df_ca_paniers = pd.DataFrame(list(ca_paniers.items()), columns=['Panier', 'Chiffre d\'affaires'])
-        df_ca_paniers['Chiffre d\'affaires'] = df_ca_paniers['Chiffre d\'affaires'].apply(lambda x: f"{x:,.2f} €")
+        df_ca_paniers['Chiffre d\'affaires'] = df_ca_paniers['Chiffre d\'affaires'].apply(lambda x: format_number_fr(x))
         st.table(df_ca_paniers)
         
         # Afficher les autres métriques
         st.subheader('Détail des métriques')
         autres_metriques = {k: v for k, v in resultats.items() if not k.startswith('CA ')}
         df_resultats = pd.DataFrame(list(autres_metriques.items()), columns=['Métrique', 'Valeur'])
-        df_resultats['Valeur'] = df_resultats['Valeur'].apply(lambda x: f"{x:,.2f} €")
+        df_resultats['Valeur'] = df_resultats.apply(lambda row: 
+            format_number_fr(row['Valeur'], is_currency=False, is_integer=True) 
+            if row['Métrique'] == 'Nombre de commandes'
+            else format_number_fr(row['Valeur']), axis=1)
         st.table(df_resultats)
 
 if __name__ == '__main__':
