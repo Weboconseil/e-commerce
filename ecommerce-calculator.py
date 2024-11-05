@@ -127,7 +127,7 @@ def display_panier_inputs(index):
         )
 
 def main():
-    st.title('Calculateur de Rentabilité E-commerce')
+    st.title('Calculer la rentabilité de votre boutique en ligne')
     
     # Initialiser l'état de la session
     initialize_session_state()
