@@ -78,7 +78,7 @@ def calculate_financials(inputs, paniers_data):
     resultat_net = resultat_avant_impot - impot
     
     resultats = {
-        'Nombre de commandes': round(nb_commandes),  # Arrondi à l'unité
+        'Nombre de commandes': round(nb_commandes),
         'Chiffre d\'affaires Total': ca_total,
         'Charges Variables': charges_variables,
         'Charges Fixes': charges_fixes,
@@ -111,7 +111,8 @@ def display_panier_inputs(index):
         panier['prix_achat'] = st.number_input(
             'Prix d\'achat',
             value=panier['prix_achat'],
-            key=f'prix_{index}'
+            key=f'prix_{index}',
+            step=1.0
         )
         
     with col3:
@@ -161,18 +162,18 @@ def main():
     st.header('3. Charges d\'exploitation')
     
     st.subheader('Charges variables')
-    frais_livraison = st.number_input('Frais de livraison par commande', value=6.0)
+    frais_livraison = st.number_input('Frais de livraison par commande', value=6.0, step=1.0)
     
     st.subheader('Charges fixes')
     col1, col2 = st.columns(2)
     
     with col1:
-        abonnement_shopify = st.number_input('Abonnement Shopify mensuel', value=32.0)
-        consultant_seo = st.number_input('Consultant SEO mensuel', value=200.0)
+        abonnement_shopify = st.number_input('Abonnement Shopify mensuel', value=32.0, step=1.0)
+        consultant_seo = st.number_input('Consultant SEO mensuel', value=200.0, step=1.0)
     
     with col2:
-        nom_domaine = st.number_input('Nom de domaine annuel', value=15.0)
-        marketing = st.number_input('Budget Marketing mensuel', value=250.0)
+        nom_domaine = st.number_input('Nom de domaine annuel', value=15.0, step=1.0)
+        marketing = st.number_input('Budget Marketing mensuel', value=250.0, step=1.0)
     
     # Rassembler les entrées pour le calcul
     inputs = {
