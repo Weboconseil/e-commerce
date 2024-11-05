@@ -77,6 +77,9 @@ def calculate_financials(inputs, paniers_data):
     impot = resultat_avant_impot * 0.25 if resultat_avant_impot > 0 else 0
     resultat_net = resultat_avant_impot - impot
     
+    # Calcul du seuil de rentabilité
+    seuil_rentabilite = charges_fixes / (1 - (charges_variables / ca_total))
+    
     resultats = {
         'Nombre de commandes': round(nb_commandes),
         'Chiffre d\'affaires Total': ca_total,
@@ -85,7 +88,8 @@ def calculate_financials(inputs, paniers_data):
         'Marge Brute': marge_brute,
         'Résultat avant impôt': resultat_avant_impot,
         'Impôt': impot,
-        'Résultat Net': resultat_net
+        'Résultat Net': resultat_net,
+        'Seuil de rentabilité': seuil_rentabilite
     }
     
     # Ajouter le CA par panier aux résultats
@@ -193,7 +197,7 @@ def main():
         st.header('Résultats des Prévisions Financières')
         
         # Afficher les KPIs principaux
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3, col4, col5 = st.columns(5)
         with col1:
             st.metric("Nombre de commandes", format_number_fr(resultats['Nombre de commandes'], is_currency=False, is_integer=True))
         with col2:
@@ -202,6 +206,8 @@ def main():
             st.metric("Marge Brute", format_number_fr(resultats['Marge Brute']))
         with col4:
             st.metric("Résultat Net", format_number_fr(resultats['Résultat Net']))
+        with col5:
+            st.metric("Seuil de rentabilité", format_number_fr(resultats['Seuil de rentabilité']))
         
         # Afficher le détail par panier
         st.subheader('Détail par panier')
