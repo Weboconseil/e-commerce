@@ -197,13 +197,14 @@ def main():
         st.header('Résultats des Prévisions Financières')
         
         # Afficher les KPIs principaux
-        col1, col2, col3, col4, col5 = st.columns(5)
+        col1, col2, col3 = st.columns(3)
         with col1:
             st.metric("Nombre de commandes", format_number_fr(resultats['Nombre de commandes'], is_currency=False, is_integer=True))
         with col2:
             st.metric("Chiffre d'affaires mensuel", format_number_fr(resultats['Chiffre d\'affaires Total']))
         with col3:
             st.metric("Marge Brute", format_number_fr(resultats['Marge Brute']))
+        col4, col5 = st.columns(2)
         with col4:
             st.metric("Résultat Net", format_number_fr(resultats['Résultat Net']))
         with col5:
