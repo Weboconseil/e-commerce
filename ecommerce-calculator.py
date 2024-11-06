@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import locale
-from components import MetricsChart
+import plotly.express as px
 
 # Configuration du format français pour les nombres
 try:
@@ -229,19 +229,41 @@ def main():
 
     if st.button('Calculer les prévisions'):
         resultats = calculate_financials(inputs, st.session_state.paniers_data)
-
+        
         # Préparer les données pour le graphique
+        # Exclure les CA par panier et le nombre de commandes pour garder des métriques comparables
         metrics_data = [
             {'Métrique': k, 'Valeur': float(v)} 
             for k, v in resultats.items() 
-            if k not in ['Chiffre d\'affaires Total', *[f"CA {p['nom']}" for p in st.session_state.paniers_data]]
+            if not k.startswith('CA ') and k != 'Nombre de commandes'
         ]
-
-        st.header('Résultats des Prévisions Financières')
-
-        # Afficher le graphique des métriques
-        st.subheader('Détail des métriques')
-        st.write(MetricsChart(metrics_data))
+        
+        # Créer un DataFrame pour le graphique
+        df_graph = pd.DataFrame(metrics_data)
+        
+        # Créer le graphique avec Plotly
+        fig = px.bar(
+            df_graph,
+            x='Métrique',
+            y='Valeur',
+            title='Métriques financières',
+            labels={'Valeur': 'Montant en €'},
+            color_discrete_sequence=['#8884d8']  # Couleur similaire à celle proposée initialement
+        )
+        
+        # Personnaliser le graphique
+        fig.update_layout(
+            xaxis_title="",
+            yaxis_title="Montant en €",
+            showlegend=False,
+            height=500
+        )
+        
+        # Rotation des labels pour une meilleure lisibilité
+        fig.update_xaxes(tickangle=45)
+        
+        # Afficher le graphique dans Streamlit
+        st.plotly_chart(fig, use_container_width=True)
 
 if __name__ == '__main__':
     main()
