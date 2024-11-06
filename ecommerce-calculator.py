@@ -228,3 +228,34 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+import matplotlib.pyplot as plt
+
+def plot_metrics(metrics):
+    fig, ax = plt.subplots()
+    metric_names = list(metrics.keys())
+    metric_values = list(metrics.values())
+    
+    # Creating a bar chart
+    ax.barh(metric_names, metric_values, color='skyblue')
+    ax.set_xlabel('Montant (€)')
+    ax.set_title('Détail des métriques financières')
+    
+    # Display the chart in Streamlit
+    st.pyplot(fig)
+
+# Running the plot function
+if __name__ == '__main__':
+    inputs = {
+        'trafic_mensuel': 5000,  # Example traffic data
+        'taux_conversion': 2,  # Example conversion rate
+        'frais_livraison': 5,  # Example delivery cost
+        'abonnement_shopify': 24,
+        'consultant_seo': 50,
+        'nom_domaine': 12,
+        'marketing': 200,
+    }
+    
+    initialize_session_state()
+    metrics = calculate_financials(inputs, st.session_state.paniers_data)
+    plot_metrics(metrics)
