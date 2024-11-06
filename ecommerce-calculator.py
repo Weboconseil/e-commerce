@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import locale
+from components import MetricsChart
 
 # Configuration du format français pour les nombres
 try:
