@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import locale
-import matplotlib.pyplot as plt
 
 # Configuration du format français pour les nombres
 try:
@@ -227,25 +226,10 @@ def main():
             else format_number_fr(row['Valeur']), axis=1)
         st.table(df_resultats)
 
-
-
-
-
-def plot_metrics(metrics):
-    fig, ax = plt.subplots()
-    metric_names = list(metrics.keys())
-    metric_values = list(metrics.values())
-    
-    # Creating a bar chart
-    ax.barh(metric_names, metric_values, color='skyblue')
-    ax.set_xlabel('Montant (€)')
-    ax.set_title('Détail des métriques financières')
-    
-    # Display the chart in Streamlit
-    st.pyplot(fig)
-
 if __name__ == '__main__':
     main()
+
+import matplotlib.pyplot as plt
 
 def plot_metrics(metrics):
     fig, ax = plt.subplots()
