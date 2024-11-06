@@ -1,8 +1,7 @@
 import streamlit as st
 import pandas as pd
 import locale
-import numpy
-import recharts
+pip install streamlit pandas numpy recharts
 
 # Configuration du format français pour les nombres
 try:
