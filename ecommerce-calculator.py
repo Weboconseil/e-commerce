@@ -226,5 +226,21 @@ def main():
             else format_number_fr(row['Valeur']), axis=1)
         st.table(df_resultats)
 
+    if st.button('Calculer les prévisions'):
+        resultats = calculate_financials(inputs, st.session_state.paniers_data)
+
+        # Préparer les données pour le graphique
+        metrics_data = [
+            {'Métrique': k, 'Valeur': float(v)} 
+            for k, v in resultats.items() 
+            if k not in ['Chiffre d\'affaires Total', *[f"CA {p['nom']}" for p in st.session_state.paniers_data]]
+        ]
+
+        st.header('Résultats des Prévisions Financières')
+
+        # Afficher le graphique des métriques
+        st.subheader('Détail des métriques')
+        st.write(MetricsChart(metrics_data))
+
 if __name__ == '__main__':
     main()
