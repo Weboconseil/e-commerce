@@ -226,8 +226,7 @@ def main():
             else format_number_fr(row['Valeur']), axis=1)
         st.table(df_resultats)
 
-if __name__ == '__main__':
-    main()
+
 
 import matplotlib.pyplot as plt
 
@@ -259,3 +258,6 @@ if __name__ == '__main__':
     initialize_session_state()
     metrics = calculate_financials(inputs, st.session_state.paniers_data)
     plot_metrics(metrics)
+
+if __name__ == '__main__':
+    main()
