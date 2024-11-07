@@ -77,15 +77,19 @@ def calculate_financials(inputs, paniers_data):
     impot = resultat_avant_impot * 0.25 if resultat_avant_impot > 0 else 0
     resultat_net = resultat_avant_impot - impot
     
+    # Calcul du seuil de rentabilité
+    seuil_rentabilite = charges_fixes / (1 - (charges_variables / ca_total))
+    
     resultats = {
-        'Nombre de commandes': round(nb_commandes),  # Arrondi à l'unité
+        'Nombre de commandes': round(nb_commandes),
         'Chiffre d\'affaires Total': ca_total,
         'Charges Variables': charges_variables,
         'Charges Fixes': charges_fixes,
         'Marge Brute': marge_brute,
         'Résultat avant impôt': resultat_avant_impot,
         'Impôt': impot,
-        'Résultat Net': resultat_net
+        'Résultat Net': resultat_net,
+        'Seuil de rentabilité': seuil_rentabilite
     }
     
     # Ajouter le CA par panier aux résultats
@@ -111,7 +115,8 @@ def display_panier_inputs(index):
         panier['prix_achat'] = st.number_input(
             'Prix d\'achat',
             value=panier['prix_achat'],
-            key=f'prix_{index}'
+            key=f'prix_{index}',
+            step=1.0
         )
         
     with col3:
@@ -161,18 +166,18 @@ def main():
     st.header('3. Charges d\'exploitation')
     
     st.subheader('Charges variables')
-    frais_livraison = st.number_input('Frais de livraison par commande', value=6.0)
+    frais_livraison = st.number_input('Frais de livraison par commande', value=6.0, step=1.0)
     
     st.subheader('Charges fixes')
     col1, col2 = st.columns(2)
     
     with col1:
-        abonnement_shopify = st.number_input('Abonnement Shopify mensuel', value=32.0)
-        consultant_seo = st.number_input('Consultant SEO mensuel', value=200.0)
+        abonnement_shopify = st.number_input('Abonnement Shopify mensuel', value=32.0, step=1.0)
+        consultant_seo = st.number_input('Consultant SEO mensuel', value=200.0, step=1.0)
     
     with col2:
-        nom_domaine = st.number_input('Nom de domaine annuel', value=15.0)
-        marketing = st.number_input('Budget Marketing mensuel', value=250.0)
+        nom_domaine = st.number_input('Nom de domaine annuel', value=15.0, step=1.0)
+        marketing = st.number_input('Budget Marketing mensuel', value=250.0, step=1.0)
     
     # Rassembler les entrées pour le calcul
     inputs = {
@@ -192,7 +197,7 @@ def main():
         st.header('Résultats des Prévisions Financières')
         
         # Afficher les KPIs principaux
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3, col4, col5 = st.columns(5)
         with col1:
             st.metric("Nombre de commandes", format_number_fr(resultats['Nombre de commandes'], is_currency=False, is_integer=True))
         with col2:
@@ -201,6 +206,8 @@ def main():
             st.metric("Marge Brute", format_number_fr(resultats['Marge Brute']))
         with col4:
             st.metric("Résultat Net", format_number_fr(resultats['Résultat Net']))
+        with col5:
+            st.metric("Seuil de rentabilité", format_number_fr(resultats['Seuil de rentabilité']))
         
         # Afficher le détail par panier
         st.subheader('Détail par panier')
